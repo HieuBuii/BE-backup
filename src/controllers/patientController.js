@@ -28,7 +28,39 @@ const postVeryfyPatientBooking = async (req, res) => {
   }
 };
 
+const getPatientAppointment = async (req, res) => {
+  try {
+    let data = await patientServices.getPatientAppointmentService(
+      req.query.patientId
+    );
+    return res.status(200).json(data);
+  } catch (e) {
+    console.log(e);
+    return res.status(200).json({
+      errCode: -1,
+      message: "Error from server !!",
+    });
+  }
+};
+
+const getPatientHistory = async (req, res) => {
+  try {
+    let data = await patientServices.getPatientHistoryService(
+      req.query.patientId
+    );
+    return res.status(200).json(data);
+  } catch (e) {
+    console.log(e);
+    return res.status(200).json({
+      errCode: -1,
+      message: "Error from server !!",
+    });
+  }
+};
+
 module.exports = {
   savePatientBooking,
   postVeryfyPatientBooking,
+  getPatientAppointment,
+  getPatientHistory,
 };

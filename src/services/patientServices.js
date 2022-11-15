@@ -2,6 +2,8 @@ import db from "../models/index";
 require("dotenv").config();
 import mailServices from "./mailServices";
 import { v4 as uuidv4 } from "uuid";
+const Sequelize = require("sequelize");
+const Op = Sequelize.Op;
 
 const buildURLVerifyEmail = (doctorId, token) => {
   let result = `${process.env.URL_REACT}/verify-booking?token=${token}&doctorId=${doctorId}`;
@@ -120,7 +122,136 @@ const postVeryfyPatientBookingService = (inputData) => {
   });
 };
 
+const getPatientAppointmentService = (patientId) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!patientId) {
+        resolve({
+          errCode: 1,
+          errMessage: "Missing required parameters !!",
+        });
+      } else {
+        let data = await db.Booking.findAll({
+          where: {
+            patientId: patientId,
+          },
+          order: [["createdAt", "DESC"]],
+          attributes: ["statusId", "doctorId", "patientId", "date", "timeType"],
+          include: [
+            {
+              model: db.Allcode,
+              as: "timeBookingData",
+              attributes: ["valueVi", "valueEn"],
+            },
+            {
+              model: db.Allcode,
+              as: "statusData",
+              attributes: ["valueVi", "valueEn"],
+            },
+            {
+              model: db.User,
+              as: "bookingDoctorData",
+              attributes: ["firstName", "lastName"],
+              include: [
+                {
+                  model: db.Doctor_Info,
+                  attributes: ["doctorId"],
+                  include: [
+                    {
+                      model: db.Clinic,
+                      as: "doctorClinicData",
+                      attributes: ["name", "address"],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          raw: false,
+          nest: true,
+        });
+
+        if (!data) {
+          data = [];
+        }
+        resolve({
+          errCode: 0,
+          data: data,
+        });
+      }
+    } catch (e) {
+      reject(e);
+    }
+  });
+};
+
+const getPatientHistoryService = (patientId) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!patientId) {
+        resolve({
+          errCode: 1,
+          errMessage: "Missing required parameters !!",
+        });
+      } else {
+        let data = await db.Booking.findAll({
+          where: {
+            patientId: patientId,
+            statusId: { [Op.or]: ["S3", "S4"] },
+          },
+          attributes: {
+            exclude: ["image"],
+          },
+          include: [
+            {
+              model: db.User,
+              as: "bookingData",
+              attributes: [
+                "firstName",
+                "phonenumber",
+                "address",
+                "gender",
+                "email",
+              ],
+              include: [
+                {
+                  model: db.Allcode,
+                  as: "genderData",
+                  attributes: ["valueVi", "valueEn"],
+                },
+              ],
+            },
+            {
+              model: db.Allcode,
+              as: "timeBookingData",
+              attributes: ["valueVi", "valueEn"],
+            },
+            {
+              model: db.Allcode,
+              as: "statusData",
+              attributes: ["valueVi", "valueEn"],
+            },
+          ],
+          raw: false,
+          nest: true,
+        });
+        if (!data) {
+          data = [];
+        }
+        resolve({
+          errCode: 0,
+          data: data,
+        });
+      }
+    } catch (e) {
+      reject(e);
+    }
+  });
+};
+
 module.exports = {
   savePatientBookingService,
   postVeryfyPatientBookingService,
+  getPatientAppointmentService,
+  getPatientHistoryService,
 };

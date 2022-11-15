@@ -149,6 +149,13 @@ const getClinicByIdService = (id) => {
               model: db.Doctor_Info,
               as: "doctorClinicData",
               attributes: ["doctorId"],
+              include: [
+                {
+                  model: db.Specialty,
+                  as: "doctorInfoData",
+                  attributes: ["id", "nameVi", "nameEn"],
+                },
+              ],
             },
           ],
           raw: false,

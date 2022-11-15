@@ -31,11 +31,13 @@ let initWebRoutes = (app) => {
     middlewareController.verifyTokenAdmin,
     userController.handleCreateUser
   );
+  router.post("/api/patient-create-user", userController.handleCreateUser);
   router.put(
     "/api/edit-user",
     middlewareController.verifyTokenAdmin,
     userController.handleEditUser
   );
+  router.put("/api/home-edit-user", userController.handleEditUser);
   router.delete(
     "/api/delete-user",
     middlewareController.verifyTokenAdmin,
@@ -80,6 +82,11 @@ let initWebRoutes = (app) => {
     "/api/verify-patient-booking",
     patientController.postVeryfyPatientBooking
   );
+  router.get(
+    "/api/get-patient-appoinment",
+    patientController.getPatientAppointment
+  );
+  router.get("/api/get-patient-history", patientController.getPatientHistory);
 
   router.post(
     "/api/create-specialty",
