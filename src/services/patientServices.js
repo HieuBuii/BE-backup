@@ -2,6 +2,7 @@ import db from "../models/index";
 require("dotenv").config();
 import mailServices from "./mailServices";
 import { v4 as uuidv4 } from "uuid";
+import { reject } from "lodash";
 const Sequelize = require("sequelize");
 const Op = Sequelize.Op;
 
@@ -136,7 +137,14 @@ const getPatientAppointmentService = (patientId) => {
             patientId: patientId,
           },
           order: [["createdAt", "DESC"]],
-          attributes: ["statusId", "doctorId", "patientId", "date", "timeType"],
+          attributes: [
+            "statusId",
+            "doctorId",
+            "patientId",
+            "date",
+            "timeType",
+            "id",
+          ],
           include: [
             {
               model: db.Allcode,
@@ -185,63 +193,104 @@ const getPatientAppointmentService = (patientId) => {
   });
 };
 
-const getPatientHistoryService = (patientId) => {
+const postRatingService = (inputData) => {
   return new Promise(async (resolve, reject) => {
     try {
-      if (!patientId) {
+      if (
+        !inputData.patientId ||
+        !inputData.doctorId ||
+        !inputData.bookingId ||
+        !inputData.rating
+      ) {
         resolve({
           errCode: 1,
           errMessage: "Missing required parameters !!",
         });
       } else {
-        let data = await db.Booking.findAll({
-          where: {
-            patientId: patientId,
-            statusId: { [Op.or]: ["S3", "S4"] },
-          },
-          attributes: {
-            exclude: ["image"],
-          },
+        await db.Rating.create({
+          patientId: inputData.patientId,
+          doctorId: inputData.doctorId,
+          bookingId: inputData.bookingId,
+          rating: inputData.rating,
+          comment: inputData.comment,
+        });
+
+        let doctorInfo = await db.Doctor_Info.findOne({
+          where: { doctorId: inputData.doctorId },
+          raw: false,
+        });
+        if (doctorInfo) {
+          doctorInfo.count = +doctorInfo.count + 1;
+          doctorInfo.total = +doctorInfo.total + inputData.rating;
+
+          await doctorInfo.save();
+        }
+
+        let booking = await db.Booking.findOne({
+          where: { id: inputData.bookingId },
+          raw: false,
+        });
+        if (booking) {
+          booking.statusId = "S5";
+
+          await booking.save();
+        }
+        resolve({
+          errCode: 0,
+          message: "OK",
+        });
+      }
+    } catch (e) {
+      reject(e);
+    }
+  });
+};
+
+const getRatingService = (doctorId) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!doctorId) {
+        resolve({
+          errCode: 1,
+          message: "Missing required parameter !!",
+        });
+      } else {
+        let rating = await db.Rating.findAll({
+          where: { doctorId: doctorId },
+          order: [["createdAt", "DESC"]],
+          attributes: ["rating", "comment"],
           include: [
             {
               model: db.User,
-              as: "bookingData",
-              attributes: [
-                "firstName",
-                "phonenumber",
-                "address",
-                "gender",
-                "email",
-              ],
+              as: "ratingDoctor",
+              attributes: ["id"],
               include: [
                 {
-                  model: db.Allcode,
-                  as: "genderData",
-                  attributes: ["valueVi", "valueEn"],
+                  model: db.Doctor_Info,
+                  attributes: ["total", "count"],
                 },
               ],
             },
             {
-              model: db.Allcode,
-              as: "timeBookingData",
-              attributes: ["valueVi", "valueEn"],
-            },
-            {
-              model: db.Allcode,
-              as: "statusData",
-              attributes: ["valueVi", "valueEn"],
+              model: db.User,
+              as: "ratingPatient",
+              attributes: ["firstName", "lastName"],
             },
           ],
           raw: false,
           nest: true,
         });
-        if (!data) {
-          data = [];
+        if (rating) {
+          resolve({
+            errCode: 0,
+            data: rating,
+          });
+        } else {
+          resolve({
+            errCode: 2,
+            message: "Not found !!",
+          });
         }
-        resolve({
-          errCode: 0,
-          data: data,
-        });
       }
     } catch (e) {
       reject(e);
@@ -253,5 +302,6 @@ module.exports = {
   savePatientBookingService,
   postVeryfyPatientBookingService,
   getPatientAppointmentService,
-  getPatientHistoryService,
+  postRatingService,
+  getRatingService,
 };
