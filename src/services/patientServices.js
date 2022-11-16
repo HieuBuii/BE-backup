@@ -2,7 +2,7 @@ import db from "../models/index";
 require("dotenv").config();
 import mailServices from "./mailServices";
 import { v4 as uuidv4 } from "uuid";
-import { reject } from "lodash";
+import _, { reject } from "lodash";
 const Sequelize = require("sequelize");
 const Op = Sequelize.Op;
 
@@ -30,50 +30,104 @@ const savePatientBookingService = (inputData) => {
           errMessage: "Missing required parameters !!",
         });
       } else {
-        //send Mail confirm
+        // let user = await db.User.findOne({
+        //   where: { email: inputData.email },
+        // });
+
+        // if (user) {
+        //   await db.Booking.findOrCreate({
+        //     where: {
+        //       patientId: user.id,
+        //       // timeType: inputData.timeType,
+        //       date: inputData.date,
+        //       statusId: { [Op.or]: ["S1", "S2", "S3", "S5"] },
+        //     },
+        //     defaults: {
+        //       statusId: "S1",
+        //       doctorId: inputData.doctorId,
+        //       patientId: user.id,
+        //       date: inputData.date,
+        //       timeType: inputData.timeType,
+        //       token: token,
+        //       reason: inputData.reason,
+        //     },
+        //   });
+        // } else {
+        //   resolve({
+        //     errCode: 2,
+        //     message: "User not found !!",
+        //   });
+        // }
 
         let token = uuidv4();
-        await mailServices.sendEmailConfirmBooking({
-          email: inputData.email,
-          fullName: inputData.fullName,
-          timeString: inputData.timeString,
-          doctorName: inputData.doctorName,
-          link: buildURLVerifyEmail(inputData.doctorId, token),
-          language: inputData.language,
+        let user = await db.User.findOne({
+          where: { email: inputData.email },
         });
 
-        let user = await db.User.findOrCreate({
-          where: { email: inputData.email },
-          defaults: {
-            email: inputData.email,
-            roleId: "R3",
-            firstName: inputData.fullName,
-            lastName: "None",
-            address: inputData.address,
-            phonenumber: inputData.phonenumber,
-            gender: inputData.gender,
-            positionId: "P0",
-          },
-        });
-        if (user && user[0]) {
-          await db.Booking.findOrCreate({
+        if (user) {
+          let bookings = await db.Booking.findAll({
             where: {
-              patientId: user[0].id,
-              timeType: inputData.timeType,
+              patientId: user.id,
               date: inputData.date,
-              statusId: "S1",
+              statusId: { [Op.or]: ["S1", "S2", "S3", "S5"] },
             },
-            defaults: {
+          });
+          if (!bookings || _.isEmpty(bookings)) {
+            await db.Booking.create({
               statusId: "S1",
               doctorId: inputData.doctorId,
-              patientId: user[0].id,
+              patientId: user.id,
               date: inputData.date,
               timeType: inputData.timeType,
               token: token,
               reason: inputData.reason,
-            },
+            });
+
+            await mailServices.sendEmailConfirmBooking({
+              email: inputData.email,
+              fullName: inputData.fullName,
+              timeString: inputData.timeString,
+              doctorName: inputData.doctorName,
+              link: buildURLVerifyEmail(inputData.doctorId, token),
+              language: inputData.language,
+            });
+          } else {
+            resolve({
+              errCode: 2,
+              message: "On day is already exits appoinment !!",
+            });
+          }
+        } else {
+          resolve({
+            errCode: 2,
+            message: "User not found !!",
           });
         }
+
+        //send Mail confirm
+        // let token = uuidv4();
+        // await mailServices.sendEmailConfirmBooking({
+        //   email: inputData.email,
+        //   fullName: inputData.fullName,
+        //   timeString: inputData.timeString,
+        //   doctorName: inputData.doctorName,
+        //   link: buildURLVerifyEmail(inputData.doctorId, token),
+        //   language: inputData.language,
+        // });
+
+        // let user = await db.User.findOrCreate({
+        //   where: { email: inputData.email },
+        //   defaults: {
+        //     email: inputData.email,
+        //     roleId: "R3",
+        //     firstName: inputData.fullName,
+        //     lastName: "None",
+        //     address: inputData.address,
+        //     phonenumber: inputData.phonenumber,
+        //     gender: inputData.gender,
+        //     positionId: "P0",
+        //   },
+        // });
 
         resolve({
           errCode: 0,

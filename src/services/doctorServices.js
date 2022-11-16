@@ -1,7 +1,7 @@
 import db from "../models/index";
 import _ from "lodash";
 import mailServices from "./mailServices";
-
+import { v4 as uuidv4 } from "uuid";
 const Sequelize = require("sequelize");
 const Op = Sequelize.Op;
 
@@ -442,7 +442,7 @@ const getHistoryDoctorService = (doctorId, date) => {
           where: {
             doctorId: doctorId,
             date: date,
-            statusId: { [Op.or]: ["S3", "S4"] },
+            statusId: { [Op.or]: ["S3", "S4", "S5"] },
           },
           attributes: {
             exclude: ["image"],
@@ -559,7 +559,13 @@ const sendMailToCusService = (data) => {
 const confirmAppointmentSucceedService = (data) => {
   return new Promise(async (resolve, reject) => {
     try {
-      if (!data.doctorId || !data.date || !data.timeType || !data.patientId) {
+      if (
+        !data.doctorId ||
+        !data.bookingId ||
+        !data.date ||
+        !data.timeType ||
+        !data.patientId
+      ) {
         resolve({
           errCode: 1,
           errMessage: "Missing required parameters !!",
@@ -567,6 +573,7 @@ const confirmAppointmentSucceedService = (data) => {
       } else {
         let appointment = await db.Booking.findOne({
           where: {
+            id: data.bookingId,
             doctorId: data.doctorId,
             patientId: data.patientId,
             date: data.date,
@@ -597,7 +604,13 @@ const confirmAppointmentSucceedService = (data) => {
 const cancelAppointmentService = (data) => {
   return new Promise(async (resolve, reject) => {
     try {
-      if (!data.doctorId || !data.date || !data.timeType || !data.patientId) {
+      if (
+        !data.bookingId ||
+        !data.doctorId ||
+        !data.date ||
+        !data.timeType ||
+        !data.patientId
+      ) {
         resolve({
           errCode: 1,
           errMessage: "Missing required parameters !!",
@@ -605,6 +618,7 @@ const cancelAppointmentService = (data) => {
       } else {
         let appointment = await db.Booking.findOne({
           where: {
+            id: data.bookingId,
             doctorId: data.doctorId,
             patientId: data.patientId,
             date: data.date,
@@ -613,7 +627,10 @@ const cancelAppointmentService = (data) => {
           raw: false,
         });
         if (appointment) {
-          (appointment.statusId = "S4"), await appointment.save();
+          (appointment.token = uuidv4()),
+            (appointment.statusId = "S4"),
+            await appointment.save();
+
           resolve({
             errCode: 0,
             message: "OK!!",
