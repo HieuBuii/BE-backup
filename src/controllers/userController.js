@@ -39,6 +39,12 @@ const handleGetAllUsers = async (req, res) => {
   });
 };
 
+const handleGetUserByEmail = async (req, res) => {
+  let email = req.query.email;
+  let user = await userServices.handleGetUserByEmail(email);
+  return res.status(200).json(user);
+};
+
 const handleCreateUser = async (req, res) => {
   let message = await userServices.createUser(req.body);
   return res.status(200).json(message);
@@ -123,4 +129,5 @@ module.exports = {
   postChangeUserPW,
   postForgotPW,
   postVeryfyForgotPW,
+  handleGetUserByEmail,
 };

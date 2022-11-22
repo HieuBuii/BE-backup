@@ -178,6 +178,31 @@ const getAllUsers = (userId) => {
     }
   });
 };
+const handleGetUserByEmail = (email) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      let user = await db.User.findOne({
+        where: { email: email },
+        attributes: {
+          exclude: ["password"],
+        },
+      });
+      if (user) {
+        resolve({
+          errCode: 0,
+          data: user,
+        });
+      } else {
+        resolve({
+          errCode: 1,
+          message: "user not found !!",
+        });
+      }
+    } catch (e) {
+      reject(e);
+    }
+  });
+};
 
 const createUser = (data) => {
   return new Promise(async (resolve, reject) => {
@@ -450,4 +475,5 @@ module.exports = {
   postChangeUserPWService,
   postForgotPWService,
   postVeryfyForgotPWService,
+  handleGetUserByEmail,
 };

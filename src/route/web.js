@@ -25,6 +25,11 @@ let initWebRoutes = (app) => {
     middlewareController.verifyTokenAdmin,
     userController.handleGetAllUsers
   );
+  router.get(
+    "/api/get-user-by-email",
+    middlewareController.verifyTokenAdmin,
+    userController.handleGetUserByEmail
+  );
   router.get("/api/home-get-all-users", userController.handleGetAllUsers);
   router.post(
     "/api/create-user",
