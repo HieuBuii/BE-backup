@@ -6,8 +6,8 @@ import _, { reject } from "lodash";
 const Sequelize = require("sequelize");
 const Op = Sequelize.Op;
 
-const buildURLVerifyEmail = (doctorId, token) => {
-  let result = `${process.env.URL_REACT}/verify-booking?token=${token}&doctorId=${doctorId}`;
+const buildURLVerifyEmail = (doctorId, scheduleId, token) => {
+  let result = `${process.env.URL_REACT}/verify-booking?token=${token}&doctorId=${doctorId}&scheduleId=${scheduleId}`;
   return result;
 };
 
@@ -15,6 +15,7 @@ const savePatientBookingService = (inputData) => {
   return new Promise(async (resolve, reject) => {
     try {
       if (
+        !inputData.scheduleId ||
         !inputData.timeType ||
         !inputData.fullName ||
         !inputData.date ||
@@ -69,7 +70,7 @@ const savePatientBookingService = (inputData) => {
             where: {
               patientId: user.id,
               date: inputData.date,
-              statusId: { [Op.or]: ["S1", "S2", "S3", "S5"] },
+              statusId: { [Op.or]: ["S1"] },
             },
           });
           if (!bookings || _.isEmpty(bookings)) {
@@ -88,7 +89,11 @@ const savePatientBookingService = (inputData) => {
               fullName: inputData.fullName,
               timeString: inputData.timeString,
               doctorName: inputData.doctorName,
-              link: buildURLVerifyEmail(inputData.doctorId, token),
+              link: buildURLVerifyEmail(
+                inputData.doctorId,
+                inputData.scheduleId,
+                token
+              ),
               language: inputData.language,
             });
           } else {
@@ -143,7 +148,7 @@ const savePatientBookingService = (inputData) => {
 const postVeryfyPatientBookingService = (inputData) => {
   return new Promise(async (resolve, reject) => {
     try {
-      if (!inputData.token || !inputData.doctorId) {
+      if (!inputData.token || !inputData.doctorId || !inputData.scheduleId) {
         resolve({
           errCode: 1,
           errMessage: "Missing required parameters !!",
@@ -160,6 +165,17 @@ const postVeryfyPatientBookingService = (inputData) => {
         if (appointment) {
           appointment.statusId = "S2";
           await appointment.save();
+
+          let schedule = await db.Schedule.findOne({
+            where: { id: inputData.scheduleId },
+            raw: false,
+          });
+
+          if (schedule) {
+            schedule.countBooking = +schedule.countBooking + 1;
+            await schedule.save();
+          }
+
           resolve({
             errCode: 0,
             message: "Update appointment succeed!!",
