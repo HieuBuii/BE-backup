@@ -67,6 +67,12 @@ const handleEditUser = async (req, res) => {
   return res.status(200).json(message);
 };
 
+const handleUserEditInfo = async (req, res) => {
+  let data = req.body;
+  let message = await userServices.userEditInfo(data);
+  return res.status(200).json(message);
+};
+
 const getAllCode = async (req, res) => {
   try {
     let data = await userServices.getAllCodeService(req.query.type);
@@ -130,4 +136,5 @@ module.exports = {
   postForgotPW,
   postVeryfyForgotPW,
   handleGetUserByEmail,
+  handleUserEditInfo,
 };

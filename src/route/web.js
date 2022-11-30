@@ -42,7 +42,7 @@ let initWebRoutes = (app) => {
     middlewareController.verifyTokenAdmin,
     userController.handleEditUser
   );
-  router.put("/api/home-edit-user", userController.handleEditUser);
+  router.put("/api/home-edit-user", userController.handleUserEditInfo);
   router.delete(
     "/api/delete-user",
     middlewareController.verifyTokenAdmin,

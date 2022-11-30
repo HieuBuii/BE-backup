@@ -263,6 +263,47 @@ const deleteUser = (userId) => {
   });
 };
 
+const handleUserEditInfo = (data) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!data.id || !data.gender) {
+        resolve({
+          errCode: 1,
+          errMessage: "Missing required parameters!!",
+        });
+      } else {
+        let user = await db.User.findOne({
+          where: { id: data.id },
+          raw: false,
+        });
+        if (user) {
+          user.firstName = data.firstName;
+          user.lastName = data.lastName;
+          user.address = data.address;
+          user.phonenumber = data.phonenumber;
+          user.gender = data.gender;
+          if (data.image) {
+            user.image = data.image;
+          }
+
+          await user.save();
+
+          resolve({
+            errCode: 0,
+            message: "Update user successed!!",
+          });
+        } else {
+          resolve({
+            errCode: 2,
+            errMessage: "User is not found!!",
+          });
+        }
+      }
+    } catch (e) {
+      reject(e);
+    }
+  });
+};
 const editUser = (data) => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -476,4 +517,5 @@ module.exports = {
   postForgotPWService,
   postVeryfyForgotPWService,
   handleGetUserByEmail,
+  handleUserEditInfo,
 };
