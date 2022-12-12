@@ -69,7 +69,7 @@ const handleEditUser = async (req, res) => {
 
 const handleUserEditInfo = async (req, res) => {
   let data = req.body;
-  let message = await userServices.userEditInfo(data);
+  let message = await userServices.handleUserEditInfo(data);
   return res.status(200).json(message);
 };
 

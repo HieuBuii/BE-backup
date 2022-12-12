@@ -91,6 +91,10 @@ let initWebRoutes = (app) => {
     "/api/get-patient-appoinment",
     patientController.getPatientAppointment
   );
+  router.post(
+    "/api/patient-cancel-appoinment",
+    patientController.cancelAppointment
+  );
   router.post("/api/post-rating", patientController.postRating);
   router.get("/api/get-rating", patientController.getRating);
 

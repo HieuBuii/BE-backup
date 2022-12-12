@@ -116,15 +116,15 @@ let handleUserLogin = async (email, password) => {
             userData.user = user;
           } else {
             userData.errCode = 3;
-            userData.errMessage = "Password is wrong!!";
+            userData.errMessage = "Mật khẩu sai, vui lòng thử lại!!";
           }
         } else {
           userData.errCode = 2;
-          userData.errMessage = "User is not found!!";
+          userData.errMessage = "Người dùng không tồn tại!!";
         }
       } else {
         userData.errCode = 1;
-        userData.errMessage = "User is not exits. Please try other email!!";
+        userData.errMessage = "Người dùng không tồn tại, vui lòng thử lại!!";
       }
       resolve(userData);
     } catch (e) {
@@ -195,7 +195,7 @@ const handleGetUserByEmail = (email) => {
       } else {
         resolve({
           errCode: 1,
-          message: "user not found !!",
+          message: "Người dùng không tồn tại !!",
         });
       }
     } catch (e) {
@@ -379,7 +379,10 @@ const postChangeUserPWService = (inputData) => {
         !inputData.oldPassword ||
         !inputData.newPassword
       ) {
-        resolve({ errCode: 1, errMessage: "Missing required parameter !!" });
+        resolve({
+          errCode: 1,
+          errMessage: "Có lỗi xảy ra, vui lòng thử lại !!",
+        });
       }
       let userData = {};
       let isExits = await checkUserEmail(inputData.email);

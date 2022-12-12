@@ -70,7 +70,7 @@ const savePatientBookingService = (inputData) => {
             where: {
               patientId: user.id,
               date: inputData.date,
-              statusId: { [Op.or]: ["S1"] },
+              statusId: { [Op.or]: ["S1", "S2"] },
             },
           });
           if (!bookings || _.isEmpty(bookings)) {
@@ -368,10 +368,59 @@ const getRatingService = (doctorId) => {
   });
 };
 
+const cancelAppointmentService = (data) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (
+        !data.bookingId ||
+        !data.doctorId ||
+        !data.date ||
+        !data.timeType ||
+        !data.patientId
+      ) {
+        resolve({
+          errCode: 1,
+          errMessage: "Missing required parameters !!",
+        });
+      } else {
+        let appointment = await db.Booking.findOne({
+          where: {
+            id: data.bookingId,
+            doctorId: data.doctorId,
+            patientId: data.patientId,
+            date: data.date,
+            timeType: data.timeType,
+          },
+          raw: false,
+        });
+        if (appointment && appointment.statusId === "S1") {
+          (appointment.token = uuidv4()),
+            (appointment.statusId = "S4"),
+            await appointment.save();
+
+          resolve({
+            errCode: 0,
+            message: "OK!!",
+          });
+        } else {
+          resolve({
+            errCode: 2,
+            message: "Có lỗi xảy ra, vui lòng thử lại !!",
+          });
+        }
+      }
+    } catch (e) {
+      console.log(e);
+      reject(e);
+    }
+  });
+};
+
 module.exports = {
   savePatientBookingService,
   postVeryfyPatientBookingService,
   getPatientAppointmentService,
   postRatingService,
   getRatingService,
+  cancelAppointmentService,
 };

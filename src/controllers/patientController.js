@@ -69,10 +69,23 @@ const postRating = async (req, res) => {
   }
 };
 
+const cancelAppointment = async (req, res) => {
+  try {
+    let data = await patientServices.cancelAppointmentService(req.body);
+    return res.status(200).json(data);
+  } catch (e) {
+    return res.status(200).json({
+      errCode: -1,
+      message: "Error from server !!",
+    });
+  }
+};
+
 module.exports = {
   savePatientBooking,
   postVeryfyPatientBooking,
   getPatientAppointment,
   postRating,
   getRating,
+  cancelAppointment,
 };
